@@ -6,10 +6,6 @@ let faces = [];
 
 function setup() {
   let cnv = createCanvas(640, 480);
-  cnv.parent(document.body);         // attach to body (before button)
-  cnv.elt.id = 'canvas';
-
-  // Move canvas to the right place in the DOM
   let btn = document.getElementById('matchBtn');
   document.body.insertBefore(cnv.elt, btn);
 
@@ -30,7 +26,6 @@ function setup() {
 
 function draw() {
   image(capture, 0, 0);
-
   if (faces.length > 0) {
     drawMesh(faces[0]);
   }
@@ -45,20 +40,38 @@ function drawMesh(face) {
   }
 }
 
+// Average 30 frames to reduce expression noise
 function matchMe() {
-  if (faces.length === 0) { alert('No face detected'); return; }
+  if (faces.length === 0) {
+    alert('No face detected yet — wait a moment and try again.');
+    return;
+  }
 
-  let kp = faces[0].keypoints;
-  let humanVector = extractRatios(kp);
-  
-  console.log('vector:', humanVector.map(n => n.toFixed(4)).join(', '));
+  let samples = [];
+  let count = 0;
 
-  let matches = findTopMatches(humanVector);
-  displayMatches(matches);
+  let interval = setInterval(() => {
+    if (faces.length > 0) {
+      samples.push(extractRatios(faces[0].keypoints));
+      count++;
+    }
+    if (count >= 30) {
+      clearInterval(interval);
+
+      let avgVector = samples[0].map((_, i) =>
+        samples.reduce((sum, v) => sum + v[i], 0) / samples.length
+      );
+
+      console.log('Vector (18):', avgVector.map(n => n.toFixed(4)).join(', '));
+      let matches = findTopMatches(avgVector);
+      displayMatches(matches);
+    }
+  }, 50);
 }
 
+// 18 features — mirrors process.py exactly
 function extractRatios(kp) {
-  // Face bounding box
+
   let faceLeft   = kp[234].x;
   let faceRight  = kp[454].x;
   let faceTop    = kp[10].y;
@@ -67,45 +80,90 @@ function extractRatios(kp) {
   let faceHeight = faceBottom - faceTop;
 
   // Left eye
-  let leftEyeOuter  = kp[33];
-  let leftEyeInner  = kp[133];
-  let leftEyeTop    = kp[159];
-  let leftEyeBottom = kp[145];
-  let leftEyeWidth  = dist(leftEyeOuter.x, leftEyeOuter.y, leftEyeInner.x, leftEyeInner.y);
-  let leftEyeOpenness = dist(leftEyeTop.x, leftEyeTop.y, leftEyeBottom.x, leftEyeBottom.y) / leftEyeWidth;
+  let leftOuter  = kp[33];
+  let leftInner  = kp[133];
+  let leftTop    = kp[159];
+  let leftBottom = kp[145];
+  let leftEyeWidth    = dist(leftOuter.x, leftOuter.y, leftInner.x, leftInner.y);
+  let leftEyeH        = dist(leftTop.x, leftTop.y, leftBottom.x, leftBottom.y);
+  let leftEyeOpenness = leftEyeH / (leftEyeWidth + 0.0001);
 
   // Right eye
-  let rightEyeOuter  = kp[362];
-  let rightEyeInner  = kp[263];
-  let rightEyeTop    = kp[386];
-  let rightEyeBottom = kp[374];
-  let rightEyeWidth  = dist(rightEyeOuter.x, rightEyeOuter.y, rightEyeInner.x, rightEyeInner.y);
-  let rightEyeOpenness = dist(rightEyeTop.x, rightEyeTop.y, rightEyeBottom.x, rightEyeBottom.y) / rightEyeWidth;
+  let rightOuter  = kp[362];
+  let rightInner  = kp[263];
+  let rightTop    = kp[386];
+  let rightBottom = kp[374];
+  let rightEyeWidth    = dist(rightOuter.x, rightOuter.y, rightInner.x, rightInner.y);
+  let rightEyeH        = dist(rightTop.x, rightTop.y, rightBottom.x, rightBottom.y);
+  let rightEyeOpenness = rightEyeH / (rightEyeWidth + 0.0001);
 
-  // Interocular distance (inner corners)
-  let interocular = dist(kp[133].x, kp[133].y, kp[362].x, kp[362].y);
+  // Eye centers
+  let leftEyeCx  = (leftOuter.x  + leftInner.x)  / 2;
+  let leftEyeCy  = (leftOuter.y  + leftInner.y)  / 2;
+  let rightEyeCx = (rightOuter.x + rightInner.x) / 2;
+  let rightEyeCy = (rightOuter.y + rightInner.y) / 2;
 
-  // Nose width (nostril tips)
-  let noseWidth = dist(kp[49].x, kp[49].y, kp[279].x, kp[279].y);
+  let interocular = dist(leftEyeCx, leftEyeCy, rightEyeCx, rightEyeCy) / faceWidth;
 
-  // Mouth width (corners)
-  let mouthWidth = dist(kp[61].x, kp[61].y, kp[291].x, kp[291].y);
+  // Nose
+  let noseLeft  = kp[49];
+  let noseRight = kp[279];
+  let noseTipX  = (noseLeft.x + noseRight.x) / 2;
+  let noseTipY  = (noseLeft.y + noseRight.y) / 2;
+  let noseWidth = dist(noseLeft.x, noseLeft.y, noseRight.x, noseRight.y) / faceWidth;
 
-  // Brow heights (brow point to eye top, normalized by face height)
-  let leftBrowHeight  = (kp[145].y - kp[105].y) / faceHeight;
-  let rightBrowHeight = (kp[374].y - kp[334].y) / faceHeight;
+  // Mouth
+  let mouthLeft  = kp[61];
+  let mouthRight = kp[291];
+  let mouthMidX  = (mouthLeft.x + mouthRight.x) / 2;
+  let mouthMidY  = (mouthLeft.y + mouthRight.y) / 2;
+  let mouthWidth = dist(mouthLeft.x, mouthLeft.y, mouthRight.x, mouthRight.y) / faceWidth;
+
+  // Brows
+  let leftBrow  = kp[105];
+  let rightBrow = kp[334];
+  let leftBrowHeight  = (leftBrow.y  - faceTop) / faceHeight;
+  let rightBrowHeight = (rightBrow.y - faceTop) / faceHeight;
+  let browWidth = dist(leftBrow.x, leftBrow.y, rightBrow.x, rightBrow.y) / faceWidth;
+
+  // New structural features
+  let noseToMouth = dist(noseTipX, noseTipY, mouthMidX, mouthMidY) / faceHeight;
+
+  let eyesMidX = (leftEyeCx + rightEyeCx) / 2;
+  let eyesMidY = (leftEyeCy + rightEyeCy) / 2;
+  let eyeToNose = dist(eyesMidX, eyesMidY, noseTipX, noseTipY) / faceHeight;
+
+  let mouthYRatio = (mouthMidY - faceTop) / faceHeight;
+  let eyeYRatio   = (eyesMidY  - faceTop) / faceHeight;
+
+  let noseToMouthWidth = noseWidth / (mouthWidth + 0.0001);
+
+  let avgEyeWidth = (leftEyeWidth / faceWidth + rightEyeWidth / faceWidth) / 2;
+  let eyeSpacingRatio = avgEyeWidth / (interocular + 0.0001);
+
+  let browToEyeLeft  = Math.abs(leftBrow.y  - leftEyeCy)  / faceHeight;
+  let browToEyeRight = Math.abs(rightBrow.y - rightEyeCy) / faceHeight;
+  let browToEye = (browToEyeLeft + browToEyeRight) / 2;
 
   return [
-    leftEyeWidth    / faceWidth,   // 1
-    rightEyeWidth   / faceWidth,   // 2
-    leftEyeOpenness,               // 3
-    rightEyeOpenness,              // 4
-    interocular     / faceWidth,   // 5
-    noseWidth       / faceWidth,   // 6
-    mouthWidth      / faceWidth,   // 7
-    faceHeight      / faceWidth,   // 8
-    leftBrowHeight,                // 9
-    rightBrowHeight                // 10
+    leftEyeWidth    / faceWidth,   // 0
+    rightEyeWidth   / faceWidth,   // 1
+    leftEyeOpenness,               // 2
+    rightEyeOpenness,              // 3
+    interocular,                   // 4
+    noseWidth,                     // 5
+    mouthWidth,                    // 6
+    faceHeight / faceWidth,        // 7
+    leftBrowHeight,                // 8
+    rightBrowHeight,               // 9
+    browWidth,                     // 10
+    noseToMouth,                   // 11
+    eyeToNose,                     // 12
+    mouthYRatio,                   // 13
+    eyeYRatio,                     // 14
+    noseToMouthWidth,              // 15
+    eyeSpacingRatio,               // 16
+    browToEye,                     // 17
   ];
 }
 
