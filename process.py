@@ -2,7 +2,6 @@ import json
 import os
 import math
 
-# Path to your dataset
 LABELS_DIR = "/Users/test/.cache/kagglehub/datasets/georgemartvel/dogflw/versions/1/DogFLW/train/labels"
 IMAGES_DIR = "/Users/test/.cache/kagglehub/datasets/georgemartvel/dogflw/versions/1/DogFLW/train/images"
 OUTPUT_FILE = "dog_vectors.json"
@@ -27,74 +26,65 @@ def extract_vector(landmarks, bounding_boxes):
     if face_width == 0 or face_height == 0:
         return None
 
-    # ── ORIGINAL 10 FEATURES ──────────────────────────────────────
+    # ── STRUCTURAL FEATURES (18) ─────────────────────────────────
 
-    # Left eye width (outer to inner corner)
-    left_eye_width = dist(landmarks[6], landmarks[0]) / face_width
-    # Right eye width
+    left_eye_width  = dist(landmarks[6], landmarks[0]) / face_width
     right_eye_width = dist(landmarks[1], landmarks[7]) / face_width
 
-    # Eye openness (top to bottom / eye width) — ratio not raw
     left_eye_h  = dist(landmarks[8], landmarks[4])
     right_eye_h = dist(landmarks[9], landmarks[5])
     left_eye_openness  = left_eye_h  / (dist(landmarks[6], landmarks[0]) + 1e-6)
     right_eye_openness = right_eye_h / (dist(landmarks[1], landmarks[7]) + 1e-6)
 
-    # Eye centers
     left_eye_center  = midpoint(landmarks[0], landmarks[6])
     right_eye_center = midpoint(landmarks[1], landmarks[7])
-
-    # Interocular distance (center to center)
     interocular = dist(left_eye_center, right_eye_center) / face_width
 
-    # Nose width
-    nose_width = dist(landmarks[32], landmarks[35]) / face_width
-
-    # Mouth width
+    nose_width  = dist(landmarks[32], landmarks[35]) / face_width
     mouth_width = dist(landmarks[38], landmarks[41]) / face_width
-
-    # Face roundness
     face_roundness = face_height / face_width
 
-    # Brow heights — normalized by face height, measured from top of bbox
     left_brow_height  = (landmarks[12][1] - y1) / face_height
     right_brow_height = (landmarks[13][1] - y1) / face_height
-
-    # ── NEW FEATURES ─────────────────────────────────────────────
-
-    # Brow width (distance between the two brow points) / face width
     brow_width = dist(landmarks[12], landmarks[13]) / face_width
 
-    # Nose to mouth distance / face height
-    # nose tip = midpoint of nostril points, mouth top = midpoint of mouth corners
-    nose_tip    = midpoint(landmarks[32], landmarks[35])
-    mouth_mid   = midpoint(landmarks[38], landmarks[41])
+    nose_tip  = midpoint(landmarks[32], landmarks[35])
+    mouth_mid = midpoint(landmarks[38], landmarks[41])
     nose_to_mouth = dist(nose_tip, mouth_mid) / face_height
 
-    # Eye to nose distance / face height
-    # midpoint between both eye centers down to midpoint of nostrils
     eyes_mid    = midpoint(left_eye_center, right_eye_center)
     eye_to_nose = dist(eyes_mid, nose_tip) / face_height
 
-    # Mouth vertical position in face (how low is the mouth?)
     mouth_y_ratio = (mouth_mid[1] - y1) / face_height
+    eye_y_ratio   = (eyes_mid[1]  - y1) / face_height
 
-    # Eye vertical position in face (how high are the eyes?)
-    eye_y_ratio = (eyes_mid[1] - y1) / face_height
-
-    # Nose width to mouth width ratio (pure shape ratio, no normalization needed)
     nose_to_mouth_width = nose_width / (mouth_width + 1e-6)
+    avg_eye_width = (left_eye_width + right_eye_width) / 2
+    eye_spacing_ratio = avg_eye_width / (interocular + 1e-6)
 
-    # Eye width to interocular ratio — are eyes wide relative to spacing?
-    eye_spacing_ratio = (left_eye_width + right_eye_width) / 2 / (interocular + 1e-6)
-
-    # Face upper third: brow to eye distance / face height
     brow_to_eye_left  = abs(landmarks[12][1] - left_eye_center[1])  / face_height
     brow_to_eye_right = abs(landmarks[13][1] - right_eye_center[1]) / face_height
     brow_to_eye = (brow_to_eye_left + brow_to_eye_right) / 2
 
+    # ── EXPRESSION FEATURES (5) ──────────────────────────────────
+
+    # Mouth openness — vertical gap, landmark 38=top lip, 45=bottom lip
+    mouth_open = dist(landmarks[38], landmarks[45]) / face_height
+
+    # Mouth corner raise — corners vs center (smile detection)
+    mouth_center_y = mouth_mid[1]
+    mouth_corner_raise = (mouth_center_y - (landmarks[39][1] + landmarks[40][1]) / 2) / face_height
+
+    # Brow raise — how far brows are above eyes
+    left_brow_raise  = (left_eye_center[1]  - landmarks[12][1]) / face_height
+    right_brow_raise = (right_eye_center[1] - landmarks[13][1]) / face_height
+    brow_raise = (left_brow_raise + right_brow_raise) / 2
+
+    # Eye squeeze — raw eye height / face height (scrunched vs wide open)
+    left_eye_squeeze  = left_eye_h  / face_height
+    right_eye_squeeze = right_eye_h / face_height
+
     return [
-        # Original 10
         round(left_eye_width,       4),  # 0
         round(right_eye_width,      4),  # 1
         round(left_eye_openness,    4),  # 2
@@ -105,7 +95,6 @@ def extract_vector(landmarks, bounding_boxes):
         round(face_roundness,       4),  # 7
         round(left_brow_height,     4),  # 8
         round(right_brow_height,    4),  # 9
-        # New 8
         round(brow_width,           4),  # 10
         round(nose_to_mouth,        4),  # 11
         round(eye_to_nose,          4),  # 12
@@ -114,9 +103,12 @@ def extract_vector(landmarks, bounding_boxes):
         round(nose_to_mouth_width,  4),  # 15
         round(eye_spacing_ratio,    4),  # 16
         round(brow_to_eye,          4),  # 17
+        round(mouth_open,           4),  # 18
+        round(mouth_corner_raise,   4),  # 19
+        round(brow_raise,           4),  # 20
+        round(left_eye_squeeze,     4),  # 21
+        round(right_eye_squeeze,    4),  # 22
     ]
-
-# ── PROCESS ALL LABEL FILES ───────────────────────────────────
 
 results = []
 skipped = 0
@@ -136,7 +128,7 @@ for filename in os.listdir(LABELS_DIR):
     with open(label_path) as f:
         data = json.load(f)
 
-    landmarks     = data["landmarks"]
+    landmarks      = data["landmarks"]
     bounding_boxes = data["bounding_boxes"]
 
     vector = extract_vector(landmarks, bounding_boxes)
@@ -153,6 +145,6 @@ for filename in os.listdir(LABELS_DIR):
 with open(OUTPUT_FILE, "w") as f:
     json.dump(results, f)
 
-print(f"✅ Done! {len(results)} dogs processed, {skipped} skipped.")
+print(f"Done! {len(results)} dogs processed, {skipped} skipped.")
 print(f"Saved to {OUTPUT_FILE}")
-print(f"Vector size: 18 features per dog")
+print(f"Vector size: 23 features per dog")
