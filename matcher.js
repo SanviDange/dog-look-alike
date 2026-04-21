@@ -59,7 +59,6 @@ function euclideanDistance(vecA, vecB) {
 }
 
 function findTopMatches(humanVector, topN = 3) {
-  // Normalize the human vector using dog population stats
   const normHuman = normalize(humanVector);
 
   let results = dogVectors.map(dog => ({
@@ -68,5 +67,15 @@ function findTopMatches(humanVector, topN = 3) {
   }));
 
   results.sort((a, b) => a.distance - b.distance);
-  return results.slice(0, topN);
+  
+  // ADD THIS:
+  let top10 = results.slice(0, 10);
+console.log('Top 10 distances:', top10.map(r => r.distance.toFixed(3)).join(', '));
+  
+  results.sort((a, b) => a.distance - b.distance);
+
+console.log('Top 10 distances:', results.slice(0, 10).map(r => r.distance.toFixed(3)).join(', '));
+console.log('Top 3 images:', results.slice(0, 3).map(r => r.image).join(', '));
+
+return results.slice(0, topN);
 }
