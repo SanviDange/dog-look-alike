@@ -46,13 +46,13 @@ function drawMesh(face) {
 }
 
 function matchMe() {
-  if (faces.length === 0) {
-    alert('No face detected yet — wait a moment and try again.');
-    return;
-  }
+  if (faces.length === 0) { alert('No face detected'); return; }
 
   let kp = faces[0].keypoints;
   let humanVector = extractRatios(kp);
+  
+  console.log('vector:', humanVector.map(n => n.toFixed(4)).join(', '));
+
   let matches = findTopMatches(humanVector);
   displayMatches(matches);
 }
