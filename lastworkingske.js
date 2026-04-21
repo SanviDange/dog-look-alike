@@ -40,6 +40,7 @@ function drawMesh(face) {
   }
 }
 
+// Average 30 frames to reduce expression noise on structural features
 function matchMe() {
   if (faces.length === 0) {
     alert('No face detected yet — wait a moment and try again.');
@@ -68,6 +69,7 @@ function matchMe() {
   }, 50);
 }
 
+// 23 features — mirrors process.py exactly
 function extractRatios(kp) {
 
   // Face bounding box
@@ -83,8 +85,8 @@ function extractRatios(kp) {
   let leftInner  = kp[133];
   let leftTop    = kp[159];
   let leftBottom = kp[145];
-  let leftEyeWidth    = dist(leftOuter.x, leftOuter.y, leftInner.x, leftInner.y);
-  let leftEyeH        = dist(leftTop.x, leftTop.y, leftBottom.x, leftBottom.y);
+  let leftEyeWidth = dist(leftOuter.x, leftOuter.y, leftInner.x, leftInner.y);
+  let leftEyeH     = dist(leftTop.x, leftTop.y, leftBottom.x, leftBottom.y);
   let leftEyeOpenness = leftEyeH / (leftEyeWidth + 0.0001);
 
   // ── RIGHT EYE ────────────────────────────────────────────────
@@ -92,8 +94,8 @@ function extractRatios(kp) {
   let rightInner  = kp[263];
   let rightTop    = kp[386];
   let rightBottom = kp[374];
-  let rightEyeWidth    = dist(rightOuter.x, rightOuter.y, rightInner.x, rightInner.y);
-  let rightEyeH        = dist(rightTop.x, rightTop.y, rightBottom.x, rightBottom.y);
+  let rightEyeWidth = dist(rightOuter.x, rightOuter.y, rightInner.x, rightInner.y);
+  let rightEyeH     = dist(rightTop.x, rightTop.y, rightBottom.x, rightBottom.y);
   let rightEyeOpenness = rightEyeH / (rightEyeWidth + 0.0001);
 
   // Eye centers
@@ -113,13 +115,9 @@ function extractRatios(kp) {
   // ── MOUTH ────────────────────────────────────────────────────
   let mouthLeft  = kp[61];
   let mouthRight = kp[291];
+  let mouthMidX  = (mouthLeft.x + mouthRight.x) / 2;
+  let mouthMidY  = (mouthLeft.y + mouthRight.y) / 2;
   let mouthWidth = dist(mouthLeft.x, mouthLeft.y, mouthRight.x, mouthRight.y) / faceWidth;
-
-  // Mouth center using the actual center landmarks, not the corners
-  let mouthCenterTop    = kp[0];   // top of upper lip, center
-  let mouthCenterBottom = kp[17];  // bottom of lower lip, center
-  let mouthMidX = (mouthCenterTop.x + mouthCenterBottom.x) / 2;
-  let mouthMidY = (mouthCenterTop.y + mouthCenterBottom.y) / 2;
 
   // ── BROWS ────────────────────────────────────────────────────
   let leftBrow  = kp[105];
@@ -129,69 +127,64 @@ function extractRatios(kp) {
   let browWidth = dist(leftBrow.x, leftBrow.y, rightBrow.x, rightBrow.y) / faceWidth;
 
   // ── STRUCTURAL DERIVED ───────────────────────────────────────
-  let noseToMouth = dist(noseTipX, noseTipY, mouthMidX, mouthMidY) / faceHeight;
-  let eyesMidX    = (leftEyeCx + rightEyeCx) / 2;
-  let eyesMidY    = (leftEyeCy + rightEyeCy) / 2;
-  let eyeToNose   = dist(eyesMidX, eyesMidY, noseTipX, noseTipY) / faceHeight;
-  let mouthYRatio = (mouthMidY - faceTop) / faceHeight;
-  let eyeYRatio   = (eyesMidY  - faceTop) / faceHeight;
-
+  let noseToMouth     = dist(noseTipX, noseTipY, mouthMidX, mouthMidY) / faceHeight;
+  let eyesMidX        = (leftEyeCx + rightEyeCx) / 2;
+  let eyesMidY        = (leftEyeCy + rightEyeCy) / 2;
+  let eyeToNose       = dist(eyesMidX, eyesMidY, noseTipX, noseTipY) / faceHeight;
+  let mouthYRatio     = (mouthMidY - faceTop) / faceHeight;
+  let eyeYRatio       = (eyesMidY  - faceTop) / faceHeight;
   let noseToMouthWidth = noseWidth / (mouthWidth + 0.0001);
-  let avgEyeWidth      = (leftEyeWidth / faceWidth + rightEyeWidth / faceWidth) / 2;
-  let eyeSpacingRatio  = avgEyeWidth / (interocular + 0.0001);
-
-  let browToEyeLeft  = Math.abs(leftBrow.y  - leftEyeCy)  / faceHeight;
-  let browToEyeRight = Math.abs(rightBrow.y - rightEyeCy) / faceHeight;
-  let browToEye      = (browToEyeLeft + browToEyeRight) / 2;
+  let avgEyeWidth     = (leftEyeWidth / faceWidth + rightEyeWidth / faceWidth) / 2;
+  let eyeSpacingRatio = avgEyeWidth / (interocular + 0.0001);
+  let browToEyeLeft   = Math.abs(leftBrow.y  - leftEyeCy)  / faceHeight;
+  let browToEyeRight  = Math.abs(rightBrow.y - rightEyeCy) / faceHeight;
+  let browToEye       = (browToEyeLeft + browToEyeRight) / 2;
 
   // ── EXPRESSION FEATURES ──────────────────────────────────────
 
   // Mouth openness — upper inner lip to lower inner lip
-  let upperLip  = kp[13];
-  let lowerLip  = kp[14];
+  let upperLip = kp[13];   // top inner lip
+  let lowerLip = kp[14];   // bottom inner lip
   let mouthOpen = dist(upperLip.x, upperLip.y, lowerLip.x, lowerLip.y) / faceHeight;
 
-  // FIX: Mouth corner raise — corners Y vs center of lips Y
-  // kp[61]/kp[291] are the corners; kp[0] is the top lip center.
-  // Positive = corners higher than lip center (smile), negative = frown.
-  let lipCenterY       = (kp[0].y + kp[17].y) / 2;
-  let cornerAvgY       = (mouthLeft.y + mouthRight.y) / 2;
-  let mouthCornerRaise = (lipCenterY - cornerAvgY) / faceHeight;
+  // Mouth corner raise — are corners pulled up? (smile)
+  // corners vs midpoint of top lip
+  let mouthCornerRaise = (mouthMidY - (mouthLeft.y + mouthRight.y) / 2) / faceHeight;
 
-  // Brow raise — how far brows sit above eye centers
+  // Brow raise — how far brows sit above eyes
   let leftBrowRaise  = (leftEyeCy  - leftBrow.y)  / faceHeight;
   let rightBrowRaise = (rightEyeCy - rightBrow.y) / faceHeight;
-  let browRaise      = (leftBrowRaise + rightBrowRaise) / 2;
+  let browRaise = (leftBrowRaise + rightBrowRaise) / 2;
 
   // Eye squeeze — raw eye height / face height
   let leftEyeSqueeze  = leftEyeH  / faceHeight;
   let rightEyeSqueeze = rightEyeH / faceHeight;
 
-  // ── 23-FEATURE VECTOR ────────────────────────────────────────
+  // ── 23-FEATURE VECTOR (matches process.py order) ─────────────
   return [
-    leftEyeWidth    / faceWidth,   // 0  L eye width / face width
-    rightEyeWidth   / faceWidth,   // 1  R eye width / face width
-    leftEyeOpenness,               // 2  L eye openness
-    rightEyeOpenness,              // 3  R eye openness
-    interocular,                   // 4  interocular / face width
-    noseWidth,                     // 5  nose width / face width
-    mouthWidth,                    // 6  mouth width / face width
-    faceHeight / faceWidth,        // 7  face roundness
-    leftBrowHeight,                // 8  L brow height / face height
-    rightBrowHeight,               // 9  R brow height / face height
-    browWidth,                     // 10 brow width / face width
-    noseToMouth,                   // 11 nose-to-mouth / face height
-    eyeToNose,                     // 12 eye-to-nose / face height
-    mouthYRatio,                   // 13 mouth Y pos / face height
-    eyeYRatio,                     // 14 eye Y pos / face height
-    noseToMouthWidth,              // 15 nose width / mouth width
-    eyeSpacingRatio,               // 16 avg eye width / interocular
-    browToEye,                     // 17 brow-to-eye gap / face height
-    mouthOpen,                     // 18 mouth openness / face height
-    mouthCornerRaise,              // 19 mouth corner raise (FIXED)
-    browRaise,                     // 20 brow raise / face height
-    leftEyeSqueeze,                // 21 L eye squeeze / face height
-    rightEyeSqueeze,               // 22 R eye squeeze / face height
+    leftEyeWidth    / faceWidth,   // 0
+    rightEyeWidth   / faceWidth,   // 1
+    leftEyeOpenness,               // 2
+    rightEyeOpenness,              // 3
+    interocular,                   // 4
+    noseWidth,                     // 5
+    mouthWidth,                    // 6
+    faceHeight / faceWidth,        // 7
+    leftBrowHeight,                // 8
+    rightBrowHeight,               // 9
+    browWidth,                     // 10
+    noseToMouth,                   // 11
+    eyeToNose,                     // 12
+    mouthYRatio,                   // 13
+    eyeYRatio,                     // 14
+    noseToMouthWidth,              // 15
+    eyeSpacingRatio,               // 16
+    browToEye,                     // 17
+    mouthOpen,                     // 18
+    mouthCornerRaise,              // 19
+    browRaise,                     // 20
+    leftEyeSqueeze,                // 21
+    rightEyeSqueeze,               // 22
   ];
 }
 
