@@ -1,5 +1,3 @@
-// sketch.js
-
 let faceMesh;
 let capture;
 let faces = [];
