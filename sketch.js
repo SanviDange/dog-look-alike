@@ -13,15 +13,76 @@ function setup() {
   capture.size(640, 480);
   capture.hide();
 
+  // Start detection only after model is ready
   faceMesh = ml5.faceMesh({ maxFaces: 1 }, () => {
     console.log('FaceMesh ready');
-  });
-
-  faceMesh.detectStart(capture, (results) => {
-    faces = results;
+    try {
+      faceMesh.detectStart(capture, (results) => {
+        faces = results;
+      });
+    } catch (err) {
+      console.warn('detectStart failed, will retry once model is fully initialized', err);
+      const t = setInterval(() => {
+        try {
+          faceMesh.detectStart(capture, (results) => { faces = results; });
+          clearInterval(t);
+          console.log('detectStart successful after retry');
+        } catch (e) {
+          // keep waiting
+        }
+      }, 200);
+    }
   });
 
   loadDogVectors();
+}
+
+function matchMe() {
+  if (faces.length === 0) {
+    alert('No face detected yet — wait a moment and try again.');
+    return;
+  }
+
+  let samples = [];
+  let count = 0;
+  const SAMPLE_COUNT = window.SAMPLE_COUNT || 30; // reduced to 30 frames for faster, less-smoothed capture
+
+  let interval = setInterval(() => {
+    if (faces.length > 0) {
+      samples.push(extractRatios(faces[0].keypoints));
+      count++;
+    }
+    if (count >= SAMPLE_COUNT) {
+      clearInterval(interval);
+
+      // compute per-component MEAN across samples to capture variation
+      const m = samples[0].length;
+      let mean = new Array(m).fill(0);
+      let mins = new Array(m).fill(Infinity);
+      let maxs = new Array(m).fill(-Infinity);
+
+      for (let i = 0; i < m; i++) {
+        const col = samples.map(s => s[i]);
+        mean[i] = col.reduce((a, b) => a + b, 0) / col.length;
+        mins[i] = Math.min(...col);
+        maxs[i] = Math.max(...col);
+      }
+
+      console.log('Vector (23) [mean]:', mean.map(n => n.toFixed(4)).join(', '));
+      console.log('Component ranges (min..max):', mins.map((mi, i) => `${mi.toFixed(4)}..${maxs[i].toFixed(4)}`).join(' | '));
+      
+      // NEW: Log raw sample variation per component
+      console.log('=== SAMPLE VARIATION ===');
+      for (let i = 0; i < Math.min(m, 5); i++) {
+        const col = samples.map(s => s[i]);
+        const variance = col.reduce((sum, x) => sum + (x - mean[i]) ** 2, 0) / col.length;
+        console.log(`  Component ${i}: mean=${mean[i].toFixed(4)}, variance=${variance.toFixed(6)}, range=${mins[i].toFixed(4)}..${maxs[i].toFixed(4)}`);
+      }
+
+      let matches = findTopMatches(mean);
+      displayMatches(matches);
+    }
+  }, 50);
 }
 
 function draw() {
@@ -40,34 +101,6 @@ function drawMesh(face) {
   }
 }
 
-function matchMe() {
-  if (faces.length === 0) {
-    alert('No face detected yet — wait a moment and try again.');
-    return;
-  }
-
-  let samples = [];
-  let count = 0;
-
-  let interval = setInterval(() => {
-    if (faces.length > 0) {
-      samples.push(extractRatios(faces[0].keypoints));
-      count++;
-    }
-    if (count >= 30) {
-      clearInterval(interval);
-
-      let avgVector = samples[0].map((_, i) =>
-        samples.reduce((sum, v) => sum + v[i], 0) / samples.length
-      );
-
-      console.log('Vector (23):', avgVector.map(n => n.toFixed(4)).join(', '));
-      let matches = findTopMatches(avgVector);
-      displayMatches(matches);
-    }
-  }, 50);
-}
-
 function extractRatios(kp) {
 
   // Face bounding box
@@ -77,6 +110,13 @@ function extractRatios(kp) {
   let faceBottom = kp[152].y;
   let faceWidth  = faceRight - faceLeft;
   let faceHeight = faceBottom - faceTop;
+  
+  // DEBUG: First call only, log face dimensions
+  if (!window._loggedFaceOnce) {
+    console.log(`Face dims: width=${faceWidth.toFixed(2)}, height=${faceHeight.toFixed(2)}, left=${faceLeft.toFixed(2)}, top=${faceTop.toFixed(2)}`);
+    console.log(`Sample keypoints: kp[33]=${JSON.stringify(kp[33])}, kp[61]=${JSON.stringify(kp[61])}, kp[0]=${JSON.stringify(kp[0])}`);
+    window._loggedFaceOnce = true;
+  }
 
   // ── LEFT EYE ─────────────────────────────────────────────────
   let leftOuter  = kp[33];
@@ -146,14 +186,20 @@ function extractRatios(kp) {
 
   // ── EXPRESSION FEATURES ──────────────────────────────────────
 
-  // Mouth openness — upper inner lip to lower inner lip
-  let upperLip  = kp[13];
-  let lowerLip  = kp[14];
-  let mouthOpen = dist(upperLip.x, upperLip.y, lowerLip.x, lowerLip.y) / faceHeight;
+  // Mouth openness — outer mouth distance (more stable)
+  let mouthTop    = kp[0];    // center top outer lip
+  let mouthBottom = kp[17];   // center bottom outer lip
+  let mouthOpen = dist(mouthTop.x, mouthTop.y, mouthBottom.x, mouthBottom.y) / faceHeight;
 
-  // FIX: Mouth corner raise — corners Y vs center of lips Y
-  // kp[61]/kp[291] are the corners; kp[0] is the top lip center.
-  // Positive = corners higher than lip center (smile), negative = frown.
+  // Inner mouth opening — more sensitive to actual opening (upper inner to lower inner)
+  let innerMouthOpen = 0;
+  if (kp[13] && kp[14]) {
+    innerMouthOpen = dist(kp[13].x, kp[13].y, kp[14].x, kp[14].y) / faceHeight;
+  } else {
+    innerMouthOpen = mouthOpen;
+  }
+
+  // Mouth corner raise — corners Y vs center of lips Y
   let lipCenterY       = (kp[0].y + kp[17].y) / 2;
   let cornerAvgY       = (mouthLeft.y + mouthRight.y) / 2;
   let mouthCornerRaise = (lipCenterY - cornerAvgY) / faceHeight;
@@ -187,11 +233,11 @@ function extractRatios(kp) {
     noseToMouthWidth,              // 15 nose width / mouth width
     eyeSpacingRatio,               // 16 avg eye width / interocular
     browToEye,                     // 17 brow-to-eye gap / face height
-    mouthOpen,                     // 18 mouth openness / face height
-    mouthCornerRaise,              // 19 mouth corner raise (FIXED)
-    browRaise,                     // 20 brow raise / face height
-    leftEyeSqueeze,                // 21 L eye squeeze / face height
-    rightEyeSqueeze,               // 22 R eye squeeze / face height
+    mouthOpen,                     // 18 outer mouth openness
+    innerMouthOpen,                // 19 inner mouth opening (more sensitive)
+    mouthCornerRaise,              // 20 mouth corner raise
+    browRaise,                     // 21 brow raise / face height
+    leftEyeSqueeze,                // 22 L eye squeeze / face height
   ];
 }
 
@@ -205,5 +251,40 @@ function displayMatches(matches) {
         <p>#${i + 1} · ${match.distance.toFixed(3)}</p>
       </div>
     `;
+  });
+}
+
+// Diagnostic function to inspect face detection
+function diagnoseFaceData() {
+  if (faces.length === 0) {
+    console.log('❌ NO FACE DETECTED');
+    return;
+  }
+  
+  const kp = faces[0].keypoints;
+  console.log('=== FACE DIAGNOSIS ===');
+  console.log(`Total keypoints: ${kp.length}`);
+  console.log(`Confidence: ${faces[0].confidence || 'N/A'}`);
+  
+  // Sample a few key points to verify detection is working
+  console.log('Sample keypoints:');
+  console.log(`  kp[0] (lip top): (${kp[0].x.toFixed(1)}, ${kp[0].y.toFixed(1)})`);
+  console.log(`  kp[10] (face top): (${kp[10].x.toFixed(1)}, ${kp[10].y.toFixed(1)})`);
+  console.log(`  kp[33] (L eye outer): (${kp[33].x.toFixed(1)}, ${kp[33].y.toFixed(1)})`);
+  console.log(`  kp[61] (mouth left): (${kp[61].x.toFixed(1)}, ${kp[61].y.toFixed(1)})`);
+  console.log(`  kp[152] (face bottom): (${kp[152].x.toFixed(1)}, ${kp[152].y.toFixed(1)})`);
+  
+  // Extract one sample to see feature values
+  const features = extractRatios(kp);
+  console.log('Extracted features (should vary per face):');
+  const names = [
+    'L_eye_width', 'R_eye_width', 'L_eye_open', 'R_eye_open', 'interocular',
+    'nose_width', 'mouth_width', 'face_roundness', 'L_brow_height', 'R_brow_height',
+    'brow_width', 'nose_to_mouth', 'eye_to_nose', 'mouth_Y', 'eye_Y',
+    'nose_to_mouth_width', 'eye_spacing', 'brow_to_eye', 'mouth_open', 'inner_mouth',
+    'mouth_corner_raise', 'brow_raise', 'L_eye_squeeze'
+  ];
+  names.forEach((name, i) => {
+    console.log(`  ${i.toString().padStart(2, ' ')}. ${name.padEnd(20, ' ')}: ${features[i].toFixed(4)}`);
   });
 }

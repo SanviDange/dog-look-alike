@@ -10,7 +10,17 @@
   <canvas id="canvas"></canvas>
  
   <button id="matchBtn" onclick="matchMe()">Match Me</button>
- 
+  <button id="diagBtn" onclick="diagnoseFaceData()" style="margin-left:8px; background:#f9f9f9;">🔍 Diagnose Face</button>
+  <div id="controls" style="margin-top:12px;">
+    <label for="modeSelect">Match mode:</label>
+    <select id="modeSelect">
+      <option value="weighted">weighted (best diversity)</option>
+      <option value="zscore">zscore (normalized)</option>
+      <option value="cosine">cosine (direction-based)</option>
+    </select>
+    <label style="margin-left:12px"><input type="checkbox" id="diversifyCheckbox" /> Diversify by breed</label>
+  </div>
+
   <div id="results"></div>
  
   <!-- p5.js -->
@@ -20,6 +30,27 @@
   <!-- your files -->
   <script src="matcher.js"></script>
   <script src="sketch.js"></script>
+  <script>
+    // Wire simple UI to control match mode and diversity
+    (function() {
+      const modeSelect = document.getElementById('modeSelect');
+      const diversifyCheckbox = document.getElementById('diversifyCheckbox');
+
+      // initialize global vars
+      window.MATCH_MODE = window.MATCH_MODE || modeSelect.value;
+      window.DIVERSIFY = !!window.DIVERSIFY;
+
+      modeSelect.addEventListener('change', (e) => {
+        window.MATCH_MODE = e.target.value;
+        console.log('MATCH_MODE set to', window.MATCH_MODE);
+      });
+
+      diversifyCheckbox.addEventListener('change', (e) => {
+        window.DIVERSIFY = e.target.checked;
+        console.log('DIVERSIFY set to', window.DIVERSIFY);
+      });
+    })();
+  </script>
  
 </body>
 </html>

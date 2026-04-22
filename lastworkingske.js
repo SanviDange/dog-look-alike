@@ -11,12 +11,25 @@ function setup() {
   capture.size(640, 480);
   capture.hide();
 
+  // Start detection only after the model signals it's ready
   faceMesh = ml5.faceMesh({ maxFaces: 1 }, () => {
     console.log('FaceMesh ready');
-  });
-
-  faceMesh.detectStart(capture, (results) => {
-    faces = results;
+    try {
+      faceMesh.detectStart(capture, (results) => {
+        faces = results;
+      });
+    } catch (err) {
+      console.warn('detectStart failed, will retry once model is fully initialized', err);
+      const t = setInterval(() => {
+        try {
+          faceMesh.detectStart(capture, (results) => { faces = results; });
+          clearInterval(t);
+          console.log('detectStart successful after retry');
+        } catch (e) {
+          // keep waiting
+        }
+      }, 200);
+    }
   });
 
   loadDogVectors();
