@@ -6,8 +6,7 @@ let faces = [];
 
 function setup() {
   let cnv = createCanvas(640, 480);
-  let btn = document.getElementById('matchBtn');
-  document.body.insertBefore(cnv.elt, btn);
+  cnv.parent('canvas-container');
 
   capture = createCapture(VIDEO);
   capture.size(640, 480);
@@ -273,16 +272,11 @@ function extractRatios(kp) {
 }
 
 function displayMatches(matches) {
-  let container = document.getElementById('results');
-  container.innerHTML = '';
-  matches.forEach((match, i) => {
-    container.innerHTML += `
-      <div class="match">
-        <img src="images/${match.image}" />
-        <p>#${i + 1} · ${match.distance.toFixed(3)}</p>
-      </div>
-    `;
-  });
+  let box = document.getElementById('dog-result-box');
+  box.innerHTML = '';
+  if (matches.length > 0) {
+    box.innerHTML = `<img src="images/${matches[0].image}" style="width:100%; height:100%; object-fit:cover; border-radius:18px;" />`;
+  }
 }
 
 // Diagnostic function to inspect face detection

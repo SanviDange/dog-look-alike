@@ -131,7 +131,7 @@ function weightedDistance(vecA, vecB, useAdaptive = false) {
 // ALWAYS compute all 3 modes for comparison
 window.MATCH_MODE = window.MATCH_MODE || 'weighted';
 
-function findTopMatches(humanVector, topN = 3) {
+function findTopMatches(humanVector, topN = 1) {
   if (!Array.isArray(humanVector)) {
     console.warn('findTopMatches: humanVector is not an array', humanVector);
     return [];

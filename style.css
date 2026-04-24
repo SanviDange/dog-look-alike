@@ -23,17 +23,19 @@ body {
   align-content: center;
 }
 
+.main-match{
+  text-align: center;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
 h1 {
-  font-size: 40px;
+  font-size: 80px;
   font-family: "Finger Paint", sans-serif;
   font-weight: 400;
   font-style: normal;
   color: #623406;
-}
-
-canvas {
-  display: block;
-  border: 1px solid #444;
 }
 
 #matchBtn {
@@ -62,4 +64,30 @@ canvas {
   font-size: 12px;
   margin-top: 4px;
   color: #aaa;
+}
+
+.layout {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  align-items: center;
+  justify-content: center;
+}
+
+#dog-result-box {
+  width: 400px;
+  height: 480px; /* matches camera height */
+  border: 0.7px solid #8B4513;
+  border-radius: 20px;
+  background: #000;
+  overflow: hidden;
+}
+
+#controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16px;
+  color: #fff;
 }
