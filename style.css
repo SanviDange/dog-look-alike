@@ -1,3 +1,6 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Baskervville:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finger+Paint&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Spectral:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800&family=Syne:wght@400..800&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -5,14 +8,27 @@
 }
 
 body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 16px;
   padding: 20px;
   background: #111;
-  color: white;
   font-family: sans-serif;
+}
+
+.index-page{
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+}
+
+h1 {
+  font-size: 40px;
+  font-family: "Finger Paint", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  color: #623406;
 }
 
 canvas {
