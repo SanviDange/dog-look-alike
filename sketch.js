@@ -55,31 +55,59 @@ function matchMe() {
     if (count >= SAMPLE_COUNT) {
       clearInterval(interval);
 
-      // compute per-component MEAN across samples to capture variation
+      // compute per-component aggregates across samples
       const m = samples[0].length;
-      let mean = new Array(m).fill(0);
       let mins = new Array(m).fill(Infinity);
       let maxs = new Array(m).fill(-Infinity);
 
-      for (let i = 0; i < m; i++) {
-        const col = samples.map(s => s[i]);
-        mean[i] = col.reduce((a, b) => a + b, 0) / col.length;
+      // define which indices are expression-sensitive and which are structural
+      // expressionIndices: eye openness (2,3), mouth openness (18,19), mouthCornerRaise (20), browRaise (21), eye squeeze (22)
+      const expressionIndices = new Set([2, 3, 18, 19, 20, 21, 22]);
+      const structuralIndices = [];
+      for (let i = 0; i < m; i++) if (!expressionIndices.has(i)) structuralIndices.push(i);
+
+      // collect columns
+      const cols = [];
+      for (let i = 0; i < m; i++) cols[i] = samples.map(s => s[i]);
+
+      // structural: mean, expression: 75th percentile to preserve peaks
+      function percentile(arr, p) {
+        if (!arr || arr.length === 0) return 0;
+        const sorted = arr.slice().sort((a,b) => a-b);
+        const idx = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * p)));
+        return sorted[idx];
+      }
+
+      let agg = new Array(m).fill(0);
+      for (let i of structuralIndices) {
+        const col = cols[i];
+        const mean = col.reduce((a,b)=>a+b,0)/col.length;
+        agg[i] = mean;
+        mins[i] = Math.min(...col);
+        maxs[i] = Math.max(...col);
+      }
+      for (let i of Array.from(expressionIndices)) {
+        const col = cols[i];
+        // use 75th percentile (0.75) so we capture expressive peaks without noise
+        const p75 = percentile(col, 0.75);
+        agg[i] = p75;
         mins[i] = Math.min(...col);
         maxs[i] = Math.max(...col);
       }
 
-      console.log('Vector (23) [mean]:', mean.map(n => n.toFixed(4)).join(', '));
+      console.log('Vector (23) [agg]:', agg.map(n => Number(n).toFixed(4)).join(', '));
       console.log('Component ranges (min..max):', mins.map((mi, i) => `${mi.toFixed(4)}..${maxs[i].toFixed(4)}`).join(' | '));
-      
-      // NEW: Log raw sample variation per component
+
+      // Log sample variation (first 5 components)
       console.log('=== SAMPLE VARIATION ===');
       for (let i = 0; i < Math.min(m, 5); i++) {
-        const col = samples.map(s => s[i]);
-        const variance = col.reduce((sum, x) => sum + (x - mean[i]) ** 2, 0) / col.length;
-        console.log(`  Component ${i}: mean=${mean[i].toFixed(4)}, variance=${variance.toFixed(6)}, range=${mins[i].toFixed(4)}..${maxs[i].toFixed(4)}`);
+        const col = cols[i];
+        const meanVal = col.reduce((sum, x) => sum + x, 0) / col.length;
+        const variance = col.reduce((sum, x) => sum + (x - meanVal) ** 2, 0) / col.length;
+        console.log(`  Component ${i}: mean=${meanVal.toFixed(4)}, variance=${variance.toFixed(6)}, range=${mins[i].toFixed(4)}..${maxs[i].toFixed(4)}`);
       }
 
-      let matches = findTopMatches(mean);
+      let matches = findTopMatches(agg);
       displayMatches(matches);
     }
   }, 50);
@@ -151,15 +179,16 @@ function extractRatios(kp) {
   let noseWidth = dist(noseLeft.x, noseLeft.y, noseRight.x, noseRight.y) / faceWidth;
 
   // ── MOUTH ────────────────────────────────────────────────────
+  // NOTE: Using FaceMesh landmarks. Approximate mapping to DogFLW:
+  // DogFLW 38/41 ≈ ml5 61/291 (mouth corners)
+  // DogFLW 45 (bottom lip) ≈ ml5 17 (lower lip center)
   let mouthLeft  = kp[61];
   let mouthRight = kp[291];
   let mouthWidth = dist(mouthLeft.x, mouthLeft.y, mouthRight.x, mouthRight.y) / faceWidth;
-
-  // Mouth center using the actual center landmarks, not the corners
-  let mouthCenterTop    = kp[0];   // top of upper lip, center
-  let mouthCenterBottom = kp[17];  // bottom of lower lip, center
-  let mouthMidX = (mouthCenterTop.x + mouthCenterBottom.x) / 2;
-  let mouthMidY = (mouthCenterTop.y + mouthCenterBottom.y) / 2;
+  
+  // Mouth center: landmarks 61=left, 291=right (corners)
+  let mouthMidX = (mouthLeft.x + mouthRight.x) / 2;
+  let mouthMidY = (mouthLeft.y + mouthRight.y) / 2;
 
   // ── BROWS ────────────────────────────────────────────────────
   let leftBrow  = kp[105];
@@ -186,23 +215,25 @@ function extractRatios(kp) {
 
   // ── EXPRESSION FEATURES ──────────────────────────────────────
 
-  // Mouth openness — outer mouth distance (more stable)
-  let mouthTop    = kp[0];    // center top outer lip
-  let mouthBottom = kp[17];   // center bottom outer lip
-  let mouthOpen = dist(mouthTop.x, mouthTop.y, mouthBottom.x, mouthBottom.y) / faceHeight;
-
-  // Inner mouth opening — more sensitive to actual opening (upper inner to lower inner)
+  // Mouth openness — use INNER mouth landmarks that actually move with jaw
+  // ml5: kp[13]=upper inner lip, kp[14]=lower inner lip (these move when mouth opens!)
+  // PRIMARY: inner mouth opening (distance between upper and lower inner lip)
   let innerMouthOpen = 0;
   if (kp[13] && kp[14]) {
     innerMouthOpen = dist(kp[13].x, kp[13].y, kp[14].x, kp[14].y) / faceHeight;
   } else {
-    innerMouthOpen = mouthOpen;
+    innerMouthOpen = 0.01; // fallback
   }
 
-  // Mouth corner raise — corners Y vs center of lips Y
-  let lipCenterY       = (kp[0].y + kp[17].y) / 2;
-  let cornerAvgY       = (mouthLeft.y + mouthRight.y) / 2;
-  let mouthCornerRaise = (lipCenterY - cornerAvgY) / faceHeight;
+  // Outer mouth opening — distance between outer lip landmarks
+  // kp[0]=upper lip center, kp[17]=lower lip center (less motion)
+  let mouthOpen = dist(kp[0].x, kp[0].y, kp[17].x, kp[17].y) / faceHeight;
+
+  // Mouth corner raise — corners Y vs center of lips Y (smile detection)
+  // DogFLW: (mouth_center_y - (landmarks[39][1] + landmarks[40][1]) / 2) / face_height
+  // ml5: (mouthMidY - average corner Y) / faceHeight
+  let cornerAvgY = (mouthLeft.y + mouthRight.y) / 2;
+  let mouthCornerRaise = (mouthMidY - cornerAvgY) / faceHeight;
 
   // Brow raise — how far brows sit above eye centers
   let leftBrowRaise  = (leftEyeCy  - leftBrow.y)  / faceHeight;
