@@ -12,6 +12,7 @@ body {
   padding: 20px;
   background: #111;
   font-family: sans-serif;
+  height: 100%;
 }
 
 .index-page{
@@ -23,11 +24,12 @@ body {
   align-content: center;
 }
 
-.main-match{
-  text-align: center;
+body.main-page {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  min-height: 100vh;
 }
 
 h1 {
@@ -38,10 +40,15 @@ h1 {
   color: #623406;
 }
 
-#matchBtn {
+.match-btn {
   padding: 10px 30px;
   font-size: 16px;
   cursor: pointer;
+  font-family: "Finger Paint", sans-serif;
+  color: #623406;
+  background-color: transparent;
+  outline: #623406 solid 2px;
+  border-radius: 20%;
 }
 
 #results {
@@ -75,9 +82,8 @@ h1 {
 }
 
 #dog-result-box {
-  width: 400px;
-  height: 480px; /* matches camera height */
-  border: 0.7px solid #8B4513;
+  width: 640px;
+  height: 480px;
   border-radius: 20px;
   background: #000;
   overflow: hidden;
@@ -88,6 +94,6 @@ h1 {
   gap: 12px;
   align-items: center;
   justify-content: center;
-  margin-top: 16px;
+  margin-top: 24px;
   color: #fff;
 }

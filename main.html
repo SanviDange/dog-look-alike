@@ -14,14 +14,7 @@
   </div>
 
   <div id="controls">
-    <button id="matchBtn" onclick="matchMe()">Match Me</button>
-    <button id="diagBtn" onclick="diagnoseFaceData()">🔍 Diagnose</button>
-    <select id="modeSelect">
-      <option value="weighted">weighted</option>
-      <option value="zscore">zscore</option>
-      <option value="cosine">cosine</option>
-    </select>
-    <label><input type="checkbox" id="diversifyCheckbox" /> Diversify by breed</label>
+    <div class="match-btn" onclick="matchMe()">Match Me</div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
@@ -29,6 +22,7 @@
   <script src="matcher.js"></script>
   <script src="sketch.js"></script>
   <script>
+    
     (function() {
       const modeSelect = document.getElementById('modeSelect');
       const diversifyCheckbox = document.getElementById('diversifyCheckbox');
