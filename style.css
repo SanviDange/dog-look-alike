@@ -10,7 +10,7 @@
 body {
   gap: 16px;
   padding: 20px;
-  background: #111;
+  background: #F2F2EB;
   font-family: sans-serif;
   height: 100%;
 }
@@ -47,6 +47,13 @@ h1 {
   font-family: "Finger Paint", sans-serif;
   color: #623406;
   background-color: transparent;
+  outline: #623406 solid 2px;
+  border-radius: 8%;
+}
+
+.match-btn:hover {
+  color: #010000;
+  background-color: #623406;
   outline: #623406 solid 2px;
   border-radius: 20%;
 }
