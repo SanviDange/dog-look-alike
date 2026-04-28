@@ -1,13 +1,70 @@
 <!DOCTYPE html>
+<html>
 <head>
   <meta charset="UTF-8" />
-  <title>Dog Look-Alike</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doggleganger</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body class="index-page">
-  <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;">
-    <h1>Do you have a dogglegänger?</h1>
-    <a href="main.html">Boop it to find out</a>
-  </div>
+  <main class="hero-container">
+    <div class="hero-section">
+      <h1>Dogglegänger</h1>
+      <p class="phonetics">/ˈdɔɡləˌɡɛŋər/</p>
+
+      <hr class="divider">
+
+      <div class="content-grid">
+        <div class="definition-box">
+          <p>
+            A <strong>Doggleganger</strong> refers to the uncanny biological mirroring between a human and their canine counterpart. 
+            It is the precise point where facial geometry meets fur-pattern logic, suggesting that every human has a four-legged twin out there.
+          </p>
+          <br>
+          <p class="boop-text" style="font-size: 16px;"><i>Boop the nose to find yours</i></p>
+               <footer class="bottom-nav">
+                 <a href="the-why.html">The why</a>
+                 <span class="separator">.</span>
+                 <a href="the-how.html">The how</a>
+               </footer>
+        </div>
+
+        <div class="boop-section">
+          <a href="main.html" class="boop-button" id="boopBtn">
+            <div class="nose-shape"></div>
+          </a>
+        </div>
+      </div>
+    
+  </footer>
+    </div>
+  </main>
+
+  <audio id="barkSound" src="/moreimages/dogbark.mp3"></audio>
+  <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const h1 = document.querySelector('h1');
+        h1.style.animation = 'bounce 0.6s ease-out';
+
+        const boopButton = document.getElementById('boopBtn');
+        const barkSound = document.getElementById('barkSound');
+
+        boopButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          const noseShape = boopButton.querySelector('.nose-shape');
+          noseShape.style.transform = 'scale(0.8) translateZ(-20px)';
+          setTimeout(() => {
+            noseShape.style.transform = '';
+            document.body.classList.add('shake');
+            setTimeout(() => {
+              document.body.classList.remove('shake');
+              window.location.href = boopButton.href;
+            }, 400);
+          }, 200);
+          barkSound.play();
+        });
+      });
+    </script>
 </body>
+</html>
