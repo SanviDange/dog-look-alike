@@ -10,15 +10,17 @@ body {
   gap: 16px;
   padding: 20px;
   background: #F5F2ED;
+  background-image: opacity: 0.1;
   font-family: sans-serif;
   min-height: 100vh;
+  margin-left: 20px;
 }
 
 .index-page{
-  text-align: center;
+  text-align: left;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: left;
   justify-content: center;
   align-content: center;
 }
@@ -32,7 +34,7 @@ body.main-page {
 }
 
 h1 {
-  font-size: 80px;
+  font-size: 200px;
   font-family: "Anton", sans-serif;
   font-weight: 400;
   font-style: normal;
@@ -47,14 +49,14 @@ h1 {
   font-family: "Anton", sans-serif;
   color: #593001;
   background-color: transparent;
-  outline: #593001 solid 2px;
+  outline: #593001 solid 1px;
   border-radius: 8%;
 }
 
 .match-btn:hover {
   color: #010000;
   background-color: #2593001
-  outline: #593001 solid 2px;
+  outline: #593001 solid 1px;
   border-radius: 20%;
 }
 
@@ -108,8 +110,8 @@ h1 {
 
 /* --- INDEX PAGE ---*/
 .hero-container {
-  width: 90%;
-  max-width: 900px;
+  width: 100%;
+  max-width: 1000px;
   display: flex;
   flex-direction: column;
   align-items: flex-start; /* was: center — makes text block left-aligned */
@@ -121,6 +123,7 @@ h1 {
   font-family: 'Inter', sans-serif;
   font-weight: 300;
   opacity: 0.8;
+  font-size: 24px;
   margin-bottom: 30px;
   letter-spacing: 2px;
   text-align: left;
@@ -132,6 +135,11 @@ h1 {
   border-top: 1px solid #593001;
   margin-bottom: 30px;
   margin-top: 20px;
+}
+
+.heading {
+  display: flex;
+  flex-direction: row;
 }
 
 /* Content Grid */
@@ -146,11 +154,12 @@ h1 {
 }
 
 .definition-box p {
-  font-size: 20px;
+  font-size: 30px;
   line-height: 1.4;
   font-weight: 300;
-  max-width: 500px;
+  max-width: 800px;
   text-align: left;
+  color: #593001;
 }
 
 .definition-box strong {
@@ -276,4 +285,22 @@ body.shake {
 .bottom-nav {
   position: relative;
   z-index: 1;
+}
+
+
+/* ----
+ABOUT PAGE STYLE
+---*/
+
+.aboutcontainer{
+ padding-top: 5px;
+}
+
+.aboutcontainer p {
+  font-size: 80px;
+  font-family: "Anton", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  color: #593001;
+  animation: bounce 0.6s ease-out;
 }
