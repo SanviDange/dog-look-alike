@@ -8,5 +8,81 @@
    <link rel="icon" type="image/x-icon" href="/moreimages/animal-paw-print.png">
 </head>
 
-<body class="aboutcontainer">
+<body class="whycontainer">
+    <div class="nav">
+        <a href="index.html" >Dogglegänger</a>.
+        <a href="the-how.html">The how</a>.
+        <a href="main.html">The match</a>
+    </div>
+
     <h1> The why</h1>
+    <p>
+        The idea for the website stems from a popular theory that I have been noticing particulalry on the streets of New York. 
+        <br>
+        Owners and dogs seem to look a little too alike?
+    </p>
+    <br>
+    <p>
+        Turns out it's not just a theory but an actual phenomenon according to 
+        <a href="https://www.nationalgeographic.com/science/article/dogs-owners-look-alike-study">National Geographic</a>,
+        <a href="https://www.bbc.com/future/article/20151111-why-do-dogs-look-like-their-owners">BBC</a>,
+        <a href="https://www.akc.org/expert-advice/lifestyle/dog-and-owner-look-alikes-more-than-funny-memes/">American Kennel Club</a>,
+        <a href="https://www.usatoday.com/picture-gallery/pets-animals/2025/11/01/photographer-gerrard-gethings-dog-cat-human-lookalike-photos/86864265007/">USA Today</a>,
+        <a href="https://www.businessinsider.com/humans-dogs-identical-2018-9">Business Insider</a>,
+        <a href="https://nypost.com/2025/11/24/lifestyle/dog-owners-swear-their-pets-personality-mirrors-their-own-survey/">New York Post</a>,
+        <a href="https://www.cnn.com/2025/03/08/health/why-dogs-look-like-their-owners-wellness">CNN</a>,
+        <a href="https://www.theguardian.com/society/2020/dec/10/dogs-owners-found-share-resemblance-diabetes-risk">The Guardian</a>,
+        <a href="https://www.discovermagazine.com/uncovering-the-mystery-of-why-dogs-might-look-like-their-owners-45079">Discover Magazine</a>,
+        <a href="https://www.economist.com/science-and-technology/2025/05/07/dogs-really-do-look-and-act-just-like-their-owners">The Economist</a>,
+         <a href="https://www.monaco-tribune.com/en/2025/11/do-monacos-dogs-look-like-their-owners-a-rokethon-investigation/">Monaco Tribune</a>,
+        <a href="https://www.rd.com/list/people-who-look-just-like-their-pets/">Reader's Digest</a>
+        ...you get the idea.
+    </p>
+
+      <script>
+    const images = [
+      "/moreimages/news1.png",
+      "/moreimages/news2.png",
+      "/moreimages/news3.png",
+      "/moreimages/news4.png",
+      "/moreimages/match1.jpg",
+      "/moreimages/match2.jpg",
+      "/moreimages/match3.jpg",
+      "/moreimages/match4.jpg",
+      "/moreimages/match5.jpg",
+      "/moreimages/match6.jpg",
+      // Add all your image paths here
+    ];
+
+    images.forEach((src) => {
+      // Random delay between 0 and 4 seconds for each image
+      const delay = Math.random() * 10000;
+
+      setTimeout(() => {
+        const img = document.createElement("img");
+        img.src = src;
+        img.style.position = "fixed";
+        img.style.width = "280px";
+        img.style.borderRadius = "8px";
+        img.style.opacity = "0";
+        img.style.transition = "opacity 0.6s ease";
+        img.style.zIndex = "100";
+
+        // Random position anywhere on screen
+        img.style.left = Math.random() * (window.innerWidth - 160) + "px";
+        img.style.top = Math.random() * (window.innerHeight - 160) + "px";
+
+        document.body.appendChild(img);
+
+        // Slight extra delay so the fade looks smooth after it's added to DOM
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            img.style.opacity = "1";
+          });
+        });
+      }, delay);
+    });
+  </script>
+
+   </body>
+</html> 

@@ -10,7 +10,6 @@ body {
   gap: 16px;
   padding: 20px;
   background: #F5F2ED;
-  background-image: opacity: 0.1;
   font-family: sans-serif;
   min-height: 100vh;
   margin-left: 20px;
@@ -42,6 +41,11 @@ h1 {
   animation: bounce 0.6s ease-out;
 }
 
+a{
+  color: #593001;
+  text-decoration: underline;
+}
+
 .match-btn {
   padding: 10px 30px;
   font-size: 16px;
@@ -50,14 +54,14 @@ h1 {
   color: #593001;
   background-color: transparent;
   outline: #593001 solid 1px;
-  border-radius: 8%;
+  border-radius: 3%;
 }
 
 .match-btn:hover {
-  color: #010000;
-  background-color: #2593001
+  color: #F5F2ED;
+  background-color: #593001;
   outline: #593001 solid 1px;
-  border-radius: 20%;
+  border-radius: 3%;
 }
 
 #results {
@@ -119,7 +123,7 @@ h1 {
   text-align: left; /* ensures text is left-aligned */
 }
 
-.phonetic {
+.phonetics{
   font-family: 'Inter', sans-serif;
   font-weight: 300;
   opacity: 0.8;
@@ -127,7 +131,6 @@ h1 {
   margin-bottom: 30px;
   letter-spacing: 2px;
   text-align: left;
-  color: #593001;
 }
 
 .divider {
@@ -289,7 +292,7 @@ body.shake {
 
 
 /* ----
-ABOUT PAGE STYLE
+THE HOW PAGE STYLE
 ---*/
 
 .aboutcontainer{
@@ -303,4 +306,59 @@ ABOUT PAGE STYLE
   font-style: normal;
   color: #593001;
   animation: bounce 0.6s ease-out;
+}
+
+
+/* ----
+THE WHY PAGE STYLE
+---*/
+
+.whycontainer{
+  padding-top: 5px;
+}
+
+.whycontainer p{
+  font-style: sans-serif;
+  line-height: 1.4;
+  font-weight: 300;
+  max-width: 800px;
+  text-align: left;
+  color: #593001;
+  font-size: 30px;
+}
+
+
+/* ----
+NAVIGATION STYLE
+---*/
+
+.nav {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  backdrop-filter: blur(10px);
+  padding: 12px 20px;
+  z-index: 1000;
+
+  gap: 2px;
+  font-size: 18px;
+
+   /* stack links vertically */
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.nav a {
+  color: #593001;
+  text-decoration: none;
+  font-weight: 300;
+  margin-left: 20px;
+  transition: opacity 0.2s;
+}
+
+.nav a:hover {
+  opacity: 0.6;
 }
