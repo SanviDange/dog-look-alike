@@ -120,8 +120,8 @@ function draw() {
 }
 
 function drawMesh(face) {
-  stroke(0, 255, 0);
-  strokeWeight(1);
+  stroke(245, 242, 237);  //COLOUR OF DOTS
+  strokeWeight(1.8);
   noFill();
   for (let pt of face.keypoints) {
     point(pt.x, pt.y);
