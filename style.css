@@ -46,11 +46,21 @@ a{
   text-decoration: underline;
 }
 
+/* --- MATCH PAGE ---*/
+
+.allcontent{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
 .match-btn {
   padding: 10px 30px;
   font-size: 16px;
   cursor: pointer;
-  font-family: "Anton", sans-serif;
+  font-family: sans-serif;
   color: #593001;
   background-color: transparent;
   outline: #593001 solid 1px;
@@ -74,8 +84,7 @@ a{
 #results .match img {
   display: block;
   width: 200px;
-  height: 200px;
-  object-fit: cover;
+  object-fit: contain;
   border: 2px solid #593001;
 }
 
@@ -94,12 +103,22 @@ a{
   justify-content: center;
 }
 
+#canvas-container {
+  border-radius: 20px;
+  overflow: hidden;
+  display: inline-block; /* shrinks to fit the canvas size */
+}
+
 #dog-result-box {
   width: 640px;
-  height: 480px;
+  /* height: 480px; */
+  height: fit-content;
+  max-height: 480px;
   border-radius: 20px;
   background: #F5F2ED;
+  object-fit: contain;
   overflow: hidden;
+  justify-content: center;
 }
 
 #controls {
