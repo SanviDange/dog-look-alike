@@ -408,24 +408,30 @@ NAVIGATION STYLE
  .layout {
   display: flex;
   flex-direction: column;
+  flex-wrap: wrap;
+  width: 100%;
   gap: 32px;
   align-items: center;
   justify-content: center;
 }
 
   #canvas-container canvas {
-    width: 100vw !important;
+    width: 90vw !important;
     height: auto !important;
   }
 
   #canvas-container {
-    width: 100vw;
+    width: 90vw !important;
   }
 
   #dog-result-box {
-    width: 100vw;
+    width: 90vw !important;
   }
-}
+
+  #dog-result-box svg {
+    width: 100% !important;
+    height: auto !important;
+  }
 
   .aboutcontainer p,
   .phonetics,

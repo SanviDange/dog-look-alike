@@ -46,51 +46,13 @@
         Dogglegänger uses facial recognition and machine learning algorithms that analyze facial features and patterns. 
         By comparing a user's photo with a vast database of dog images, the system identifies potential matches and suggests the most likely canine match based purely on physical features and expressions.
     </p>
-
-      <script>
-    const images = [
-      "/moreimages/news1.png",
-      "/moreimages/news2.png",
-      "/moreimages/news3.png",
-      "/moreimages/news4.png",
-      "/moreimages/match1.jpg",
-      "/moreimages/match2.jpg",
-      "/moreimages/match3.jpg",
-      "/moreimages/match4.jpg",
-      "/moreimages/match5.jpg",
-      "/moreimages/match6.jpg",
-      // Add all your image paths here
-    ];
-
-    images.forEach((src) => {
-      // Random delay between 0 and 4 seconds for each image
-      const delay = Math.random() * 200000;
-
-      setTimeout(() => {
-        const img = document.createElement("img");
-        img.src = src;
-        img.style.position = "fixed";
-        img.style.width = "280px";
-        img.style.borderRadius = "8px";
-        img.style.opacity = "0";
-        img.style.transition = "opacity 0.6s ease";
-        img.style.zIndex = "100";
-
-        // Random position anywhere on screen
-        img.style.left = Math.random() * (window.innerWidth - 160) + "px";
-        img.style.top = Math.random() * (window.innerHeight - 160) + "px";
-
-        document.body.appendChild(img);
-
-        // Slight extra delay so the fade looks smooth after it's added to DOM
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            img.style.opacity = "1";
-          });
-        });
-      }, delay);
-    });
-  </script>
+    
+<script>
+  document.querySelectorAll('a[href^="http"]').forEach(link => {
+    link.setAttribute('target', '_blank');
+    link.setAttribute('rel', 'noopener noreferrer');
+  });
+</script>
 
    </body>
 </html> 

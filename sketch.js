@@ -119,6 +119,19 @@ function draw() {
   }
 }
 
+function windowResized() {
+  // Recalculate canvas size on window resize
+  let canvasWidth = 640;
+  let canvasHeight = 480;
+  if (windowWidth < 768) {
+    canvasWidth = windowWidth;
+    canvasHeight = (canvasWidth / 640) * 480; // Maintain 4:3 aspect ratio
+  }
+  
+  resizeCanvas(canvasWidth, canvasHeight);
+  capture.size(canvasWidth, canvasHeight);
+}
+
 function drawMesh(face) {
   stroke(245, 242, 237);  //COLOUR OF DOTS
   strokeWeight(1.5);
