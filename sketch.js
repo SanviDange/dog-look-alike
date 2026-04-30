@@ -275,7 +275,67 @@ function displayMatches(matches) {
   let box = document.getElementById('dog-result-box');
   box.innerHTML = '';
   if (matches.length > 0) {
-    box.innerHTML = `<img src="images/${matches[0].image}" style="width:100%; height:100%; object-fit:cover; border-radius:18px;" />`;
+    const imageName = matches[0].image;
+    const labelFile = `labels/${imageName.replace(/\.[^/.]+$/, '')}.json`;
+    
+    // Create wrapper div with relative positioning
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.width = '100%';
+    wrapper.style.height = '100%';
+    
+    // Create and append image
+    const img = document.createElement('img');
+    img.src = `images/${imageName}`;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    img.style.borderRadius = '18px';
+    img.style.display = 'block';
+    
+    wrapper.appendChild(img);
+    box.appendChild(wrapper);
+    
+    // Fetch landmarks and draw them after image loads
+    img.onload = () => {
+      fetch(labelFile)
+        .then(response => response.json())
+        .then(data => {
+          if (data.landmarks && Array.isArray(data.landmarks)) {
+            // Get scale factors from natural image dimensions
+            const scaleX = 640 / img.naturalWidth;
+            const scaleY = 480 / img.naturalHeight;
+            
+            // Create SVG overlay
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '640');
+            svg.setAttribute('height', '480');
+            svg.style.position = 'absolute';
+            svg.style.top = '0';
+            svg.style.left = '0';
+            svg.style.pointerEvents = 'none';
+            
+            // Scale landmarks from original image space to display space (640x480)
+            data.landmarks.forEach(([lmX, lmY]) => {
+              // Scale from original image dimensions to 640x480
+              const cx = lmX * scaleX;
+              const cy = lmY * scaleY;
+              
+              // Draw dot
+              const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+              circle.setAttribute('cx', cx);
+              circle.setAttribute('cy', cy);
+              circle.setAttribute('r', '1.5');
+              circle.setAttribute('fill', '#f5f2ed');
+              circle.setAttribute('opacity', '0.7');
+              svg.appendChild(circle);
+            });
+            
+            wrapper.appendChild(svg);
+          }
+        })
+        .catch(err => console.warn(`Could not load landmarks for ${imageName}:`, err));
+    };
   }
 }
 
