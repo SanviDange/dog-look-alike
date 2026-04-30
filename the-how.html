@@ -17,7 +17,7 @@
 
   <h1>The how</h1>
 
-  <p>
+<p>
     The system uses a combination of facial recognition technology and breed-specific features to find the best match. 
     Once a match is found, users can see a side-by-side comparison of their photo and the dog's photo, highlighting the similarities.
   </p>
@@ -30,11 +30,11 @@
 
   <p>
     The dog's landmarks are from the <a href="https://www.kaggle.com/datasets/georgemartvel/dogflw">DogFLW dataset</a>, which annotates various facial points on the dog's face.
-    The dataset contains 4,335 images of dogs' faces in various environments and conditions, each annotated with 46 facial landmarks and a bounding box.
+    The dataset contains 4,335 images of dogs' faces in various environments and conditions, each annotated with <strong>46 facial landmarks</strong> and a bounding box.
   </p>
 
   <p>
-    From the 478 landmarks ml5.js detects, 23 proportional features are extracted. 
+    From the 478 landmarks ml5.js detects, <strong>23 proportional features</strong> are extracted. 
     Not raw pixel positions, but ratios relative to face size so they hold up regardless of distance from the camera. 
     These include eye width, eye openness, interocular distance, nose width, mouth width, face roundness, brow height, brow-to-eye gap, nose-to-mouth distance, and expression features like brow raise, mouth corner lift, and eye squeeze.
   </p>
@@ -43,22 +43,23 @@
     On the dog side, the same 23 features are computed from the 46 DogFLW landmarks and stored as a vector for every dog in the database. 
     Not all 23 features are weighted equally. 
     To find the closest match, three algorithms were tested: weighted Euclidean distance, z-score normalized distance, and cosine similarity. 
-    After testing all three against real faces, weighted Euclidean distance consistently produced the most visually convincing matches, so that is what the final model uses.
+    After testing all three against real faces, <strong><strong>weighted Euclidean distance</strong></strong> consistently produced the most visually convincing matches, so that is what the final model uses.
   </p>
 
   <p>
-    The weighted distance between your face and each dog is calculated like this: 
-    <br style="text-align: center; align-items: center;">
-    d = √( Σ ( wᵢ × (humanᵢ − dogᵢ) )² ), 
+    The weighted distance between your face and each dog is calculated: 
+    <br>
+    <strong><strong>d = √( Σ ( wᵢ × (humanᵢ − dogᵢ) )² )</strong></strong>
     <br>
     where wᵢ is the weight for feature i, humanᵢ is your extracted ratio, and dogᵢ is the dog's ratio. The dog with the smallest d across all 3,853 dogs in the database is your match.
   </p>
 
   <p>
-    For example, in one real match the extracted human vector included an eye openness of 0.36, a brow raise of 0.15, and a mouth corner raise of 0.00. The winning dog produced a weighted distance of 0.49, beating out 3,852 other dogs. All three algorithms ran simultaneously but weighted Euclidean returned the closest visual result, so that is the match you see.
+    For example, in one real match the extracted human vector included an eye openness of 0.36, a brow raise of 0.15, and a mouth corner raise of 0.00. 
+    The winning dog produced a <strong>weighted distance of 0.49</strong>, beating out 3,852 other dogs, so that is the match you see.
   </p>
 
-  <p>
+  <p style="opacity: 0.5;font-size: 15px;">
     The matching logic, feature extraction, and weight tuning were built with the help of an AI assistant, used throughout to write, test, and refine the calculation code.
   </p>
 

@@ -389,3 +389,63 @@ NAVIGATION STYLE
   margin-left: 2px;
   margin-right: 2px;
 }
+
+
+@media (max-width: 768px) {
+  body,
+  .index-page,
+  .whycontainer,
+  .aboutcontainer,
+  .main-page {
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  h1 {
+    font-size: 60px;
+  }
+
+ .layout {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  align-items: center;
+  justify-content: center;
+}
+
+  #canvas-container canvas {
+    width: 100vw !important;
+    height: auto !important;
+  }
+
+  #canvas-container {
+    width: 100vw;
+  }
+
+  #dog-result-box {
+    width: 100vw;
+  }
+}
+
+  .aboutcontainer p,
+  .phonetics,
+  .definition-box p,
+  .whycontainer p {
+    font-size: 20px;
+  }
+
+  .whycontainer,
+  .aboutcontainer{
+   padding-top: 40px;
+   }
+
+
+  .nav {
+    font-size: 14px;
+  }
+
+  body {
+    margin-left: 0;
+    padding: 12px;
+  }
+}
